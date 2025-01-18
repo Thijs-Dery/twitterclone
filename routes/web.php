@@ -7,15 +7,17 @@ use Illuminate\Support\Facades\Route;
 // Homepagina met tweets
 Route::get('/', [TweetController::class, 'index'])->name('tweets.index');
 
-// Dashboard (voor ingelogde gebruikers)
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Routes voor het dashboard (alleen ingelogde gebruikers)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
 
-// Routes voor het plaatsen van tweets (alleen ingelogde gebruikers)
-Route::post('/tweets', [TweetController::class, 'store'])->middleware('auth')->name('tweets.store');
+    // Routes voor het plaatsen van tweets
+    Route::post('/tweets', [TweetController::class, 'store'])->name('tweets.store');
+});
 
-// Routes voor profielbeheer
+// Routes voor profielbeheer (alleen ingelogde gebruikers)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -23,4 +25,4 @@ Route::middleware('auth')->group(function () {
 });
 
 // Authenticatieroutes
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

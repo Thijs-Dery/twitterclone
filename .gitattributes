@@ -23,3 +23,7 @@ CHANGELOG.md export-ignore
 *.jpeg binary
 *.gif binary
 *.ico binary
+
+# Zorg ervoor dat alle tekstbestanden LF gebruiken
+* text=auto
+*.php text eol=lf
