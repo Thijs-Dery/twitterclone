@@ -2,30 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Tweet;
+use Illuminate\Http\Request;
 
 class TweetController extends Controller
 {
-    // Methode om alle tweets weer te geven
     public function index()
     {
-        $tweets = Tweet::latest()->get(); // Haal tweets op, gesorteerd op nieuwste eerst
+        $tweets = Tweet::latest()->get();
         return view('tweets.index', compact('tweets'));
     }
 
-    // Methode om een nieuwe tweet op te slaan
     public function store(Request $request)
     {
         $request->validate([
-            'content' => 'required|max:280', // Valideer de inhoud van de tweet
+            'content' => 'required|max:280',
         ]);
 
         Tweet::create([
+            'user_id' => auth()->id(),
             'content' => $request->content,
-            'user_id' => auth()->id(), // Koppel tweet aan de ingelogde gebruiker
         ]);
-        
 
         return redirect()->route('tweets.index');
     }
