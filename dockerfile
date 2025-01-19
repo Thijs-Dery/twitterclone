@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     nano \
     procps \
     net-tools \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd mysqli \ 
     && apt-get clean
 
 # Stap 3: Installeer Composer

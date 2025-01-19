@@ -10,7 +10,6 @@ services:
       - "8000:80"
     volumes:
       - .:/var/www/html
-      - ./nginx/default:/etc/nginx/sites-available/default
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
