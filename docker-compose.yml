@@ -6,6 +6,17 @@ services:
       - twitterclone_network
     ports:
       - "8000:80"
+    environment:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: twitterclone
+      DB_USERNAME: admin
+      DB_PASSWORD: Admin123!
+    volumes:
+      - ./mysql-init-scripts:/init-scripts #start script voor instellen van db
+    entrypoint: ["sh", "-c", "mysql -u$DB_USERNAME -p$DB_PASSWORD -h$DB_HOST -P$DB_PORT < /init-scripts/init.sql && php-fpm"]
+    depends_on:
+      - db
 
 networks:
   twitterclone_network:
