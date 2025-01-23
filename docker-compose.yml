@@ -14,6 +14,9 @@ services:
       DB_DATABASE: twitterclone
       DB_USERNAME: admin
       DB_PASSWORD: Admin123!
+      PUSHER_HOST: ""
+      PUSHER_PORT: ""
+      PUSHER_SCHEME: ""
     volumes:
       - .:/var/www/html
     depends_on:
@@ -38,6 +41,18 @@ services:
       - twitterclone_network
     ports:
       - "3307:3306"
+
+  backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.backup
+    environment:
+      MYSQL_ROOT_PASSWORD: Admin123!
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backups:/backups
+    networks:
+      - twitterclone_network
 
 networks:
   twitterclone_network:

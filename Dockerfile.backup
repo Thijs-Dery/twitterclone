@@ -1,0 +1,17 @@
+FROM debian:bullseye-slim
+
+# Install MySQL client, cron, and other tools
+RUN apt-get update && apt-get install -y \
+    default-mysql-client iputils-ping cron \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the backup script into the container
+COPY backup.sh /usr/local/bin/backup.sh
+RUN chmod +x /usr/local/bin/backup.sh
+
+# Add the cron job configuration
+COPY cronjob /etc/cron.d/backup-cron
+RUN chmod 0644 /etc/cron.d/backup-cron && crontab /etc/cron.d/backup-cron
+
+# Start the cron service when the container starts
+CMD ["cron", "-f"]
