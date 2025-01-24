@@ -14,10 +14,12 @@ services:
       DB_DATABASE: twitterclone
       DB_USERNAME: admin
       DB_PASSWORD: Admin123!
-      PUSHER_HOST: ""
-      PUSHER_PORT: ""
-      PUSHER_SCHEME: ""
+      PUSHER_HOST: "localhost"
+      PUSHER_PORT: "6001"
+      PUSHER_SCHEME: "http"
     volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
       - .:/var/www/html
     depends_on:
       - db
@@ -54,9 +56,55 @@ services:
     networks:
       - twitterclone_network
 
+  test-app:
+    build:
+      context: .
+    networks:
+      - twitterclone_network
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: test-db
+      DB_PORT: 3306
+      DB_DATABASE: twitterclone_staging
+      DB_USERNAME: admin
+      DB_PASSWORD: Admin123!
+      PUSHER_HOST: "localhost"
+      PUSHER_PORT: "6001"
+      PUSHER_SCHEME: "http"
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+      - .:/var/www/html
+    depends_on:
+      - test-db
+    command: >
+      sh -c "
+      composer install --no-dev --optimize-autoloader &&
+      php artisan migrate --force &&
+      php artisan storage:link &&
+      php artisan cache:clear &&
+      php artisan serve --host=0.0.0.0 --port=80
+      "
+
+  test-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: Admin123!
+      MYSQL_DATABASE: twitterclone_staging
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: Admin123!
+    volumes:
+      - test_db_data:/var/lib/mysql
+    networks:
+      - twitterclone_network
+    ports:
+      - "3308:3306"
+
 networks:
   twitterclone_network:
     driver: bridge
 
 volumes:
   db_data:
+  test_db_data:
