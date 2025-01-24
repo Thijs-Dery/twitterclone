@@ -25,15 +25,15 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Ensure storage and cache directories exist
+RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Set permissions
+# Set permissions safely
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache \
     && chown -R www-data:www-data /var/www/html
 
 # Remove default Nginx configuration
-RUN rm /etc/nginx/sites-enabled/default
+RUN rm -f /etc/nginx/sites-enabled/default
 
 # Copy custom Nginx configuration
 COPY ./nginx/default /etc/nginx/sites-available/default
