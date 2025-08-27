@@ -2,15 +2,15 @@ name: Deploy and Test Laravel Application
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
+  workflow_dispatch: {}
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     services:
       mysql:
         image: mysql:8.0
@@ -23,87 +23,65 @@ jobs:
           - 3306:3306
         options: >-
           --health-cmd="mysqladmin ping -hmysql --silent"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=5
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: twitterclone
+      DB_USERNAME: admin
+      DB_PASSWORD: Admin123!
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-          extensions: pdo_mysql
+          extensions: mbstring, pdo_mysql, tokenizer, xml, curl, bcmath
+          coverage: none
 
-      - name: Install Composer dependencies
-        run: composer install
-
-      - name: Wait for MySQL to be ready
+      - name: Prepare .env & APP_KEY
         run: |
-          echo "Waiting for MySQL to be ready..."
-          for i in {1..5}; do
-            if mysqladmin ping -hmysql -P3306 --silent; then
-              echo "MySQL is ready!"
+          cp .env.example .env || true
+          php -r "file_exists('.env') || copy('.env.example', '.env');"
+          php artisan key:generate
+
+      - name: Install Composer deps
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then
               exit 0
             fi
-            echo "Waiting for MySQL... ($i/5)"
-            sleep 5
+            sleep 2
           done
-          echo "MySQL did not become ready in time, continuing gracefully."
+          exit 1
 
-      - name: Debug MySQL Logs
-        if: failure()
-        run: |
-          echo "Debugging MySQL logs..."
-          docker logs $(docker ps -q --filter "ancestor=mysql:8.0") || true
-
-      - name: Cache Laravel configuration
+      - name: Cache config
         run: php artisan config:cache
 
-      - name: Run Laravel migrations
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: mysql
-          DB_PORT: 3306
-          DB_DATABASE: twitterclone
-          DB_USERNAME: admin
-          DB_PASSWORD: Admin123!
-        run: |
-          echo "Running migrations..."
-          php artisan migrate --force || true
+      - name: Run migrations
+        run: php artisan migrate --force
 
-      - name: Run Laravel Unit Tests
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: mysql
-          DB_PORT: 3306
-          DB_DATABASE: twitterclone
-          DB_USERNAME: admin
-          DB_PASSWORD: Admin123!
-        run: |
-          echo "Running unit tests..."
-          php artisan test --testsuite=Unit || true
+      - name: Run Unit tests
+        run: php artisan test --testsuite=Unit --verbose
 
-      - name: Run Laravel Feature Tests
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: mysql
-          DB_PORT: 3306
-          DB_DATABASE: twitterclone
-          DB_USERNAME: admin
-          DB_PASSWORD: Admin123!
-        run: |
-          echo "Running feature tests..."
-          php artisan test --testsuite=Feature || true
+      - name: Run Feature tests
+        run: php artisan test --testsuite=Feature --verbose
 
   deploy:
     runs-on: ubuntu-latest
     needs: test
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -111,13 +89,19 @@ jobs:
           php-version: 8.2
           extensions: pdo_mysql
 
-      - name: Install Composer dependencies
-        run: composer install --no-dev --optimize-autoloader
+      - name: Prepare .env & APP_KEY
+        run: |
+          cp .env.example .env || true
+          php -r "file_exists('.env') || copy('.env.example', '.env');"
+          php artisan key:generate
 
-      - name: Cache Laravel configuration
+      - name: Install Composer (prod)
+        run: composer install --no-interaction --prefer-dist --no-progress --no-dev --optimize-autoloader
+
+      - name: Cache config
         run: php artisan config:cache
 
-      - name: Run Laravel migrations
+      - name: Run migrations
         env:
           DB_CONNECTION: mysql
           DB_HOST: mysql
@@ -125,10 +109,7 @@ jobs:
           DB_DATABASE: twitterclone
           DB_USERNAME: admin
           DB_PASSWORD: Admin123!
-        run: |
-          echo "Running migrations for deployment..."
-          php artisan migrate --force || true
+        run: php artisan migrate --force
 
       - name: Deploy Application
-        run: |
-          echo "Deploying the application to the production server"
+        run: echo "Deploying the application to the production server"
