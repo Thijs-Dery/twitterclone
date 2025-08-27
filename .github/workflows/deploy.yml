@@ -22,12 +22,12 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -hmysql --silent"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -P 3306 --silent"
           --health-interval=5s --health-timeout=5s --health-retries=20
 
     env:
       DB_CONNECTION: mysql
-      DB_HOST: mysql
+      DB_HOST: 127.0.0.1
       DB_PORT: 3306
       DB_DATABASE: twitterclone
       DB_USERNAME: admin
@@ -63,7 +63,7 @@ jobs:
         run: |
           echo "Waiting for MySQL on $DB_HOST:$DB_PORT ..."
           for i in $(seq 1 60); do
-            if mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" --silent; then
+            if mysqladmin ping --protocol=TCP -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" --silent; then
               echo "MySQL is ready."
               exit 0
             fi
