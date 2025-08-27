@@ -80,10 +80,11 @@ jobs:
         run: php artisan migrate --force
 
       - name: Run Unit tests
-        run: php artisan test --testsuite=Unit --verbose
+        run: php artisan test --testsuite=Unit -v
 
       - name: Run Feature tests
-        run: php artisan test --testsuite=Feature --verbose
+        run: php artisan test --testsuite=Feature -v
+
 
   deploy:
     runs-on: ubuntu-latest
