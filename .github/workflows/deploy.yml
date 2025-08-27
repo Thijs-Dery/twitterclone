@@ -53,7 +53,13 @@ jobs:
       - name: Install Composer deps
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+
       - name: Wait for MySQL
+        shell: bash
         run: |
           for i in {1..30}; do
             if mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then
