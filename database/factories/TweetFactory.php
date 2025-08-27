@@ -16,7 +16,7 @@ class TweetFactory extends Factory
     public function definition(): array
     {
         return [
-            'body' => $this->faker->sentence(),
+            'content' => $this->faker->text(140), // max 280, maar faker->text() geeft variatie
             'user_id' => User::factory(),
         ];
     }
